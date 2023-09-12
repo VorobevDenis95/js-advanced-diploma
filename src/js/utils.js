@@ -23,6 +23,34 @@
  * ```
  * */
 export function calcTileType(index, boardSize) {
+  const lastField = boardSize ** 2 - 1;
+  if (index > 0 && index < boardSize - 1) {
+    return 'top';
+  }
+  if (index < lastField && index > lastField - boardSize + 1) {
+    return 'bottom';
+  }
+  if ((((index / boardSize) % 1) === 0) && index / boardSize > 0
+  && index / boardSize < boardSize - 1) {
+    return 'left';
+  }
+  if ((((index - (boardSize - 1)) / (boardSize)) % 1) === 0
+  && index / (boardSize - 1) > 1
+  && index / (boardSize - 1) < boardSize) {
+    return 'right';
+  }
+  if (index === 0) {
+    return 'top-left';
+  }
+  if (index === boardSize - 1) {
+    return 'top-right';
+  }
+  if (index === lastField - boardSize + 1) {
+    return 'bottom-left';
+  }
+  if (index === lastField) {
+    return 'bottom-right';
+  }
   // TODO: ваш код будет тут
   return 'center';
 }

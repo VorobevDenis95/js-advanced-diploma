@@ -19,6 +19,10 @@ export default class Character {
     this.defence = 0;
     this.health = 50;
     this.type = type;
+    this.position = null;
+    if (new.target.name === 'Character') {
+      throw new Error('Нельзя создавать класс Character');
+    }
     // TODO: выбросите исключение, если кто-то использует "new Character()"
   }
 }
