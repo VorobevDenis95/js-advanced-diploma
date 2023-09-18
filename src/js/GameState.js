@@ -11,11 +11,13 @@ export default class GameState {
     this.level = 1;
     this.listTeamsPlayer = [Bowman, Swordsman, Magician];
     this.listTeamsComputer = [Vampire, Undead, Daemon];
-    this.teamsPlayerPositions = [];
+    this.teamsPositions = [];
     this.teamsPositionIndex = [];
     this.teamsComputerPositions = [];
+    this.possiblePositions = [];
     this.teamsPlayer = [];
     this.teamsComputer = [];
+    this.selectPositionIndex = null;
   }
 
   static from(object) {

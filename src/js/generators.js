@@ -41,11 +41,17 @@ export function generatePositionPlayer(gameplayPosition) {
 }
 
 export function generatePositionComputer(gameplayPosition) {
-  const computerPosition = gameplayPosition.filter((it) => (((it - 6) % 8 === 0) || ((it - 7) % 8 === 0)));
+  const computerPosition = gameplayPosition.filter((it) => (((it - 6) % 8 === 0)
+   || ((it - 7) % 8 === 0)));
   const key = Math.round(Math.random() * (computerPosition.length - 1));
   return computerPosition[key];
 }
 
 export function generateMessage(character) {
-  return ` U+1F396 ${character.level}  U+2694 ${character.attack} U+1F6E1 ${character.defence}  U+2764 ${character.health}`;
+  const medal = String.fromCodePoint(0x1F396);
+  const swords = String.fromCodePoint(0x2694);
+  const shield = String.fromCodePoint(0x1F6E1);
+  const heart = String.fromCodePoint(0x2764);
+
+  return `${medal} ${character.level} ${swords} ${character.attack} ${shield} ${character.defence} ${heart} ${character.health}`;
 }
