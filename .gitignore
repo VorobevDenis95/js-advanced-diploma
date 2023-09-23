@@ -1,6 +1,8 @@
-dist
+src
 doc
 .idea
+index.html
+index.js
 
 # Logs
 logs
