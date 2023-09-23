@@ -6,6 +6,7 @@ export default class GamePlay {
     this.container = null;
     this.boardEl = null;
     this.position = [...Array(this.boardSize ** 2).keys()];
+    this.randomPosition = null;
     this.cells = [];
     this.cellClickListeners = [];
     this.cellEnterListeners = [];

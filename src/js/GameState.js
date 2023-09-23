@@ -15,9 +15,12 @@ export default class GameState {
     this.teamsPositionIndex = [];
     this.teamsComputerPositions = [];
     this.possiblePositions = [];
+    this.computerPosiblePosition = [];
+    this.possibleAttack = [];
     this.teamsPlayer = [];
     this.teamsComputer = [];
     this.selectPositionIndex = null;
+    this.computerMove = false;
   }
 
   static from(object) {

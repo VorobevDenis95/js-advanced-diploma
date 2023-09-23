@@ -66,3 +66,11 @@ export function calcHealthLevel(health) {
 
   return 'high';
 }
+
+export function calcCoordinateCharacter(index, boardSize = 8) {
+  return { x: index % boardSize, y: Math.floor(index / boardSize) };
+}
+
+export function filterPosition(arr) {
+  arr.filter((el) => el.position);
+}

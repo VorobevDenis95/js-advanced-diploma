@@ -55,3 +55,7 @@ export function generateMessage(character) {
 
   return `${medal} ${character.level} ${swords} ${character.attack} ${shield} ${character.defence} ${heart} ${character.health}`;
 }
+
+export function generateRandomKey(arr) {
+  return Math.floor(Math.random() * (arr.length - 1));
+}
