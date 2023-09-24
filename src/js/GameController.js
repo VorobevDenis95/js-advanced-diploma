@@ -1,13 +1,17 @@
+/* eslint-disable max-len */
+/* eslint-disable no-continue */
+/* eslint-disable no-mixed-operators */
+/* eslint-disable no-unused-expressions */
 import themes from './themes';
 import PositionCharacter from './PositionedCharacter';
 
 import GameState from './GameState';
 import {
-  generateMessage, generatePositionComputer, generatePositionPlayer, generateRandomKey, generateTeam,
+  generateMessage, generatePositionComputer, generatePositionPlayer,
+  generateRandomKey, generateTeam,
 } from './generators';
 import GamePlay from './GamePlay';
 import cursors from './cursors';
-import { calcCoordinateCharacter, filterPosition } from './utils';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -57,6 +61,9 @@ export default class GameController {
       let arr;
       if (this.gameState.teamsPlayer.teams.includes(character)) {
         arr = this.gameState.teamsPlayer.teams;
+        this.gameState.selectPositionIndex = null;
+        this.gameState.possibleAttack = [];
+        this.gameState.computerPosiblePosition = [];
       } else {
         arr = this.gameState.teamsComputer.teams;
       }
@@ -130,8 +137,7 @@ export default class GameController {
       this.riseOftheMonsters();
       this.showPossibleTransition(index, this.searchHero(index).range);
       this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
-      
-      
+
       // console.log(this.gameState.computerPosibleAttack);
     }
 
@@ -207,9 +213,10 @@ export default class GameController {
     let position = [];
 
     // left
-    let countLeft, countTop, countRight, countBottom, countLeftTop, countRightTop, countLeftBottom, countRightBottom;
+    let countLeft; let countTop; let countRight; let countBottom; let countLeftTop;
+    let countRightTop; let countLeftBottom; let countRightBottom;
 
-    (index % boardSize > range) ? countLeft = range : countLeft = index % boardSize;
+    index % boardSize > range ? countLeft = range : countLeft = index % boardSize;
 
     for (let i = 1; i <= countLeft; i += 1) {
       const indexTransition = index - i;
@@ -217,7 +224,8 @@ export default class GameController {
     }
     // right
 
-    (index % boardSize + range <= boardSize - 1) ? countRight = range : countRight = boardSize - 1- (index % boardSize);
+    index % boardSize + range <= boardSize - 1 ? countRight = range
+      : countRight = boardSize - 1 - (index % boardSize);
 
     for (let i = 1; i <= countRight; i += 1) {
       const indexTransition = index + i;
@@ -225,14 +233,16 @@ export default class GameController {
     }
     // top
 
-    (Math.floor(index / boardSize) - range >= 0 ) ? countTop = range : countTop = Math.floor(index / boardSize);
+    (Math.floor(index / boardSize) - range >= 0) ? countTop = range
+      : countTop = Math.floor(index / boardSize);
 
     for (let i = 1; i <= countTop; i += 1) {
       const indexTransition = index - boardSize * i;
       position.push(indexTransition);
     }
     // bottom
-    (Math.floor(index / boardSize) + range <= boardSize - 1) ? countBottom = range : countBottom = (boardSize - 1) - (Math.floor(index / boardSize));
+    (Math.floor(index / boardSize) + range <= boardSize - 1) ? countBottom = range
+      : countBottom = (boardSize - 1) - (Math.floor(index / boardSize));
 
     for (let i = 1; i <= countBottom; i += 1) {
       const indexTransition = index + boardSize * i;
@@ -241,8 +251,10 @@ export default class GameController {
 
     // top-left diagonal
     let minLeftTop = null;
-    Math.floor(index / boardSize) <=  index % boardSize ? minLeftTop = Math.floor(index / boardSize) : minLeftTop = index % boardSize;
-    (Math.floor(index / boardSize) - range >= 0 && index % boardSize > range) ? countLeftTop = range : countLeftTop = minLeftTop;
+    Math.floor(index / boardSize) <= index % boardSize
+      ? minLeftTop = Math.floor(index / boardSize) : minLeftTop = index % boardSize;
+    (Math.floor(index / boardSize) - range >= 0 && index % boardSize > range)
+      ? countLeftTop = range : countLeftTop = minLeftTop;
 
     for (let i = 1; i <= countLeftTop; i += 1) {
       const indexTransition = index - (boardSize * i) - i;
@@ -251,8 +263,13 @@ export default class GameController {
 
     // top-right diagonal
     let minRightTop = null;
-    Math.floor(index / boardSize) <= boardSize - 1- index % boardSize ? minRightTop =  Math.floor(index / boardSize) : minRightTop = boardSize - 1- index % boardSize;
-    Math.floor(index / boardSize) - range >= 0 && (index % boardSize + range <= boardSize - 1) ? countRightTop = range : countRightTop = minRightTop;
+    Math.floor(index / boardSize) <= boardSize - 1 - index % boardSize
+      ? minRightTop = Math.floor(index / boardSize)
+      : minRightTop = boardSize - 1 - index % boardSize;
+
+    Math.floor(index / boardSize) - range >= 0
+    && (index % boardSize + range <= boardSize - 1)
+      ? countRightTop = range : countRightTop = minRightTop;
 
     for (let i = 1; i <= countRightTop; i += 1) {
       const indexTransition = index - (boardSize * i) + i;
@@ -261,8 +278,12 @@ export default class GameController {
 
     // bottom-left diagonal
     let minLeftBottom = null;
-    boardSize - 1 - Math.floor(index / boardSize) <=  index % boardSize ? minLeftBottom = boardSize - Math.floor(index / boardSize) : minLeftBottom = index % boardSize;
-    (Math.floor(index / boardSize) + range <= boardSize - 1 && index % boardSize > range) ? countLeftBottom = range : countLeftBottom = minLeftBottom;
+    boardSize - 1 - Math.floor(index / boardSize) <= index % boardSize
+      ? minLeftBottom = boardSize - Math.floor(index / boardSize)
+      : minLeftBottom = index % boardSize;
+
+    (Math.floor(index / boardSize) + range <= boardSize - 1 && index % boardSize > range)
+      ? countLeftBottom = range : countLeftBottom = minLeftBottom;
 
     for (let i = 1; i <= countLeftBottom; i += 1) {
       const indexTransition = index + (boardSize * i) - i;
@@ -271,8 +292,13 @@ export default class GameController {
 
     // bottom-right diagonal
     let minRigthBottom = null;
-    boardSize - 1 - index % boardSize <= boardSize - 1 - Math.floor(index/boardSize) ? minRigthBottom = boardSize - 1 - index % boardSize : minRigthBottom = boardSize - Math.floor(index/boardSize);
-    index % boardSize + range <= boardSize - 1 && Math.floor(index / boardSize) + range <= boardSize - 1 ? countRightBottom = range : countRightBottom = minRigthBottom;
+    boardSize - 1 - index % boardSize <= boardSize - 1 - Math.floor(index / boardSize)
+      ? minRigthBottom = boardSize - 1 - index % boardSize
+      : minRigthBottom = boardSize - Math.floor(index / boardSize);
+
+    index % boardSize + range <= boardSize - 1
+      && Math.floor(index / boardSize) + range <= boardSize - 1
+      ? countRightBottom = range : countRightBottom = minRigthBottom;
 
     for (let i = 1; i <= countRightBottom; i += 1) {
       const indexTransition = index + (boardSize * i) + i;
@@ -289,13 +315,22 @@ export default class GameController {
   }
 
   showOpportunityAttack(index, rangeAttack, boardSize = 8) {
-    let positionAttack = [];
+    const positionAttack = [];
 
-    let countLeft, countTop, countRight, countBottom;
-    (index % boardSize + rangeAttack <= boardSize - 1) ? countRight = rangeAttack : countRight = boardSize - 1 - (index % boardSize);
-    (index % boardSize > rangeAttack) ? countLeft = rangeAttack : countLeft = index % boardSize;
-    (Math.floor(index / boardSize) - rangeAttack >= 0 ) ? countTop = rangeAttack : countTop = Math.floor(index / boardSize);
-    (Math.floor(index / boardSize) + rangeAttack <= boardSize - 1) ? countBottom = rangeAttack : countBottom = (boardSize - 1) - (Math.floor(index / boardSize));
+    let countLeft; let countTop; let countRight; let
+      countBottom;
+    (index % boardSize + rangeAttack <= boardSize - 1)
+      ? countRight = rangeAttack : countRight = boardSize - 1 - (index % boardSize);
+
+    (index % boardSize > rangeAttack) ? countLeft = rangeAttack
+      : countLeft = index % boardSize;
+
+    (Math.floor(index / boardSize) - rangeAttack >= 0)
+      ? countTop = rangeAttack : countTop = Math.floor(index / boardSize);
+
+    (Math.floor(index / boardSize) + rangeAttack <= boardSize - 1)
+      ? countBottom = rangeAttack : countBottom = (boardSize - 1) - (Math.floor(index / boardSize));
+
     const start = index - countLeft - countTop * boardSize;
     const endRow = index + countRight - countTop * boardSize;
     const end = index + countBottom * boardSize;
@@ -303,7 +338,7 @@ export default class GameController {
 
     for (let j = start; j <= endRow; j += 1) {
       for (let i = 0; i <= count; i += 1) {
-        let ind = j + i * boardSize;
+        const ind = j + i * boardSize;
         if (ind === index) {
           continue;
         }
@@ -320,22 +355,28 @@ export default class GameController {
   riseOftheMonsters() {
     // create array computer and player team
     this.gameState.computerMove = true;
-    const { teamsPlayer, teamsComputer, teamsPositions } = this.gameState;
-    
+    const { teamsPlayer, teamsPositions } = this.gameState;
+
     // const playerTeam = teamsPositions.splice(teamsPlayer.length, teamsPositions.length - 1);
-    
-    const playerTeamCharacter = teamsPositions.map(el => el.character).splice(0, teamsPlayer.teams.length);
-    const playerTeamPosition = teamsPositions.map(el => el.position).splice(0, teamsPlayer.teams.length);
+
+    // const playerTeamCharacter = teamsPositions.map((el) => el.character)
+    //   .splice(0, teamsPlayer.teams.length);
+    const playerTeamPosition = teamsPositions.map((el) => el.position)
+      .splice(0, teamsPlayer.teams.length);
 
     // const playerTeamPosition = filterPosition(playerTeam);
-    const computerTeamCharacter = teamsPositions.map(el => el.character).splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
-    const computerTeamPosition = teamsPositions.map(el => el.position).splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
+    const computerTeamCharacter = teamsPositions.map((el) => el.character)
+      .splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
+    const computerTeamPosition = teamsPositions.map((el) => el.position)
+      .splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
     let positionAttack = null;
-    
-    
+
     const compKey = generateRandomKey(computerTeamCharacter);
     // attack and movement positions
-    // this.showPossibleTransition(computerTeamPosition[compKey], computerTeamCharacter[compKey].range);
+
+    // this.showPossibleTransition(computerTeamPosition[compKey],
+    //  computerTeamCharacter[compKey].range);
+
     // const keysComp = generateRandomKey(this.gameState.computerPosiblePosition);
     // console.log('1 ' + computerTeamPosition[compKey]);
     // console.log('2 ' + computerTeamCharacter[compKey].range);
@@ -343,20 +384,22 @@ export default class GameController {
     // console.log('4 ' +this.gameState.computerPosiblePosition[keysComp]);
 
     const run = (() => {
-      this.showPossibleTransition(computerTeamPosition[compKey], computerTeamCharacter[compKey].range);
+      this.showPossibleTransition(computerTeamPosition[compKey], computerTeamCharacter[compKey]
+        .range);
       const keysComp = generateRandomKey(this.gameState.computerPosiblePosition);
       this.transitionHeroPosition(this.gameState.computerPosiblePosition[keysComp], computerTeamPosition[compKey]);
       this.filterTeamsPosition();
       this.gamePlay.redrawPositions(this.gameState.teamsPositions);
       console.log(this.gameState);
     });
-    
-    // this.showOpportunityAttack(computerTeamPosition[compKey], computerTeamCharacter[compKey].rangeAttack);
-    
+
+    // this.showOpportunityAttack(computerTeamPosition[compKey],
+    // computerTeamCharacter[compKey].rangeAttack);
+
     let indexComputer;
     // // we go through the player’s positions for the possibility of attack
     for (const comp of computerTeamPosition) {
-      console.log('comp ' +comp);
+      console.log(`comp ${comp}`);
       if (positionAttack) {
         break;
       }
@@ -370,12 +413,14 @@ export default class GameController {
         }
       }
     }
-    
+
     // console.log('compAttack '+this.gameState.computerPosibleAttack)
-     console.log('positionattack ' + positionAttack)
+    console.log(`positionattack ${positionAttack}`);
     // console.log(computerTeamPosition[compKey]);
     // console.log(computerTeamCharacter[compKey]);
-    positionAttack ? this.attack(indexComputer, this.searchHero(positionAttack), positionAttack) : run()
+    positionAttack ? this.attack(indexComputer, this.searchHero(positionAttack), positionAttack)
+      : run();
+
     this.gameState.computerMove = false;
   }
 }
