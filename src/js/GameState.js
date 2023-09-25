@@ -9,6 +9,7 @@ export default class GameState {
   constructor() {
     this.score = 0;
     this.level = 1;
+    this.countCharacters = 2;
     this.listTeamsPlayer = [Bowman, Swordsman, Magician];
     this.listTeamsComputer = [Vampire, Undead, Daemon];
     this.teamsPositions = [];
@@ -25,6 +26,7 @@ export default class GameState {
   }
 
   static from(object) {
+    console.log(object);
     // TODO: create object
     return null;
   }

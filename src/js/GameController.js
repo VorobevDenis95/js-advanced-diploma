@@ -31,8 +31,8 @@ export default class GameController {
   }
 
   generateTeams() {
-    this.gameState.teamsPlayer = generateTeam(this.gameState.listTeamsPlayer, this.gameState.level, 2);
-    this.gameState.teamsComputer = generateTeam(this.gameState.listTeamsComputer, this.gameState.level, 2);
+    this.gameState.teamsPlayer = generateTeam(this.gameState.listTeamsPlayer, this.gameState.level, this.gameState.countCharacters);
+    this.gameState.teamsComputer = generateTeam(this.gameState.listTeamsComputer, this.gameState.level, this.gameState.countCharacters);
   }
 
   generatePlayersonBoard() {
@@ -77,6 +77,20 @@ export default class GameController {
     }
   }
 
+  endOfTheGame() {
+    this.cleaningBoard();
+  }
+
+  cleaningBoard() {
+    this.gameState.teamsPositions = [];
+    this.gamePlay.redrawPositions();
+  }
+
+  cleanCell(position) {
+    this.gamePlay.deselectCell(position);
+    this.gamePlay.setCursor(cursors.auto);
+  }
+
   async attack(attacker, target, index) {
     const damage = Math.floor(Math.max(attacker.attack - target.defence, attacker.attack * 0.1));
     // eslint-disable-next-line no-param-reassign
@@ -109,10 +123,8 @@ export default class GameController {
       this.gameState.selectPositionIndex = index;
       this.showPossibleTransition(index, this.searchHero(index).range);
       this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
-
-      // console.log(this.gameState.possiblePositions);
-      // console.log(this.gameState.possibleAttack);
     }
+
     if (this.gameState.teamsPositionIndex.includes(index)
     && !this.gameState.teamsPlayer.teams.includes(this.searchHero(index))
     && !this.gameState.selectPositionIndex) {
@@ -137,8 +149,6 @@ export default class GameController {
       this.riseOftheMonsters();
       this.showPossibleTransition(index, this.searchHero(index).range);
       this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
-
-      // console.log(this.gameState.computerPosibleAttack);
     }
 
     // character attack
@@ -158,7 +168,6 @@ export default class GameController {
 
   onCellEnter(index) {
     // Chracter information on hover
-    // console.log(index);
 
     if (this.gameState.teamsPositionIndex.includes(index)) {
       this.gamePlay.showCellTooltip(generateMessage(this.searchHero(index)), index);
@@ -174,10 +183,17 @@ export default class GameController {
         }
       }
     }
-    if (this.gameState.possiblePositions.includes(index) && (this.gameState.selectPositionIndex)) {
+
+    // color indication of possible moves
+    if (this.gameState.possiblePositions.includes(index) && this.gameState.selectPositionIndex) {
       this.gamePlay.setCursor(cursors.pointer);
       this.gamePlay.selectCell(index, 'green');
     }
+    if (this.gameState.possiblePositions.includes(index) && this.gameState.selectPositionIndex === 0) {
+      this.gamePlay.setCursor(cursors.pointer);
+      this.gamePlay.selectCell(index, 'green');
+    }
+
     if ((this.gameState.selectPositionIndex === index)) {
       this.gamePlay.setCursor(cursors.auto);
     }
@@ -353,72 +369,64 @@ export default class GameController {
   }
 
   riseOftheMonsters() {
-    // create array computer and player team
-    this.gameState.computerMove = true;
-    const { teamsPlayer, teamsPositions } = this.gameState;
+    if (this.gameState.teamsComputer.teams.length > 0) {
+      // create array computer and player team
+      this.gameState.computerMove = true;
+      const { teamsPlayer, teamsPositions } = this.gameState;
 
-    // const playerTeam = teamsPositions.splice(teamsPlayer.length, teamsPositions.length - 1);
+      // const playerTeam = teamsPositions.splice(teamsPlayer.length, teamsPositions.length - 1);
 
-    // const playerTeamCharacter = teamsPositions.map((el) => el.character)
-    //   .splice(0, teamsPlayer.teams.length);
-    const playerTeamPosition = teamsPositions.map((el) => el.position)
-      .splice(0, teamsPlayer.teams.length);
+      // const playerTeamCharacter = teamsPositions.map((el) => el.character)
+      //   .splice(0, teamsPlayer.teams.length);
+      const playerTeamPosition = teamsPositions.map((el) => el.position)
+        .splice(0, teamsPlayer.teams.length);
 
-    // const playerTeamPosition = filterPosition(playerTeam);
-    const computerTeamCharacter = teamsPositions.map((el) => el.character)
-      .splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
-    const computerTeamPosition = teamsPositions.map((el) => el.position)
-      .splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
-    let positionAttack = null;
+      // const playerTeamPosition = filterPosition(playerTeam);
+      const computerTeamCharacter = teamsPositions.map((el) => el.character)
+        .splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
+      const computerTeamPosition = teamsPositions.map((el) => el.position)
+        .splice(teamsPlayer.teams.length, teamsPlayer.teams.length);
+      let positionAttack = null;
 
-    const compKey = generateRandomKey(computerTeamCharacter);
-    // attack and movement positions
+      const compKey = generateRandomKey(computerTeamCharacter);
+      // attack and movement positions
 
-    // this.showPossibleTransition(computerTeamPosition[compKey],
-    //  computerTeamCharacter[compKey].range);
+      const run = (() => {
+        this.showPossibleTransition(computerTeamPosition[compKey], computerTeamCharacter[compKey]
+          .range);
+        const keysComp = generateRandomKey(this.gameState.computerPosiblePosition);
+        this.transitionHeroPosition(this.gameState.computerPosiblePosition[keysComp], computerTeamPosition[compKey]);
+        this.filterTeamsPosition();
+        this.cleanCell(computerTeamPosition[compKey]);
+        this.gamePlay.redrawPositions(this.gameState.teamsPositions);
+      });
 
-    // const keysComp = generateRandomKey(this.gameState.computerPosiblePosition);
-    // console.log('1 ' + computerTeamPosition[compKey]);
-    // console.log('2 ' + computerTeamCharacter[compKey].range);
-    // console.log('3 ' + this.gameState.computerPosiblePosition);
-    // console.log('4 ' +this.gameState.computerPosiblePosition[keysComp]);
+      // this.showOpportunityAttack(computerTeamPosition[compKey],
+      // computerTeamCharacter[compKey].rangeAttack);
 
-    const run = (() => {
-      this.showPossibleTransition(computerTeamPosition[compKey], computerTeamCharacter[compKey]
-        .range);
-      const keysComp = generateRandomKey(this.gameState.computerPosiblePosition);
-      this.transitionHeroPosition(this.gameState.computerPosiblePosition[keysComp], computerTeamPosition[compKey]);
-      this.filterTeamsPosition();
-      this.gamePlay.redrawPositions(this.gameState.teamsPositions);
-      console.log(this.gameState);
-    });
-
-    // this.showOpportunityAttack(computerTeamPosition[compKey],
-    // computerTeamCharacter[compKey].rangeAttack);
-
-    let indexComputer;
-    // // we go through the player’s positions for the possibility of attack
-    for (const comp of computerTeamPosition) {
-      if (positionAttack) {
-        break;
-      }
-      this.showOpportunityAttack(comp, this.searchHero(comp).rangeAttack);
-      indexComputer = this.searchHero(comp);
-      for (const item of playerTeamPosition) {
-        if (this.gameState.computerPosibleAttack.includes(item)) {
-          positionAttack = item;
+      let indexComputer;
+      // // we go through the player’s positions for the possibility of attack
+      for (const comp of computerTeamPosition) {
+        if (positionAttack) {
           break;
         }
+        this.showOpportunityAttack(comp, this.searchHero(comp).rangeAttack);
+        indexComputer = this.searchHero(comp);
+        for (const item of playerTeamPosition) {
+          if (this.gameState.computerPosibleAttack.includes(item)) {
+            positionAttack = item;
+            break;
+          }
+        }
       }
+
+      positionAttack ? this.attack(indexComputer, this.searchHero(positionAttack), positionAttack)
+        : run();
+
+      this.gameState.computerMove = false;
     }
-
-    // console.log('compAttack '+this.gameState.computerPosibleAttack)
-    console.log(`positionattack ${positionAttack}`);
-    // console.log(computerTeamPosition[compKey]);
-    // console.log(computerTeamCharacter[compKey]);
-    positionAttack ? this.attack(indexComputer, this.searchHero(positionAttack), positionAttack)
-      : run();
-
-    this.gameState.computerMove = false;
+    if (this.gameState.teamsComputer.teams.length === 0) {
+      this.init();
+    }
   }
 }
