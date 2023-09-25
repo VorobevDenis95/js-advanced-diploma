@@ -74,3 +74,14 @@ export function calcCoordinateCharacter(index, boardSize = 8) {
 export function filterPosition(arr) {
   arr.filter((el) => el.position);
 }
+
+// export function levelUp(character, level) {
+//   for (let i = character.level; i < level; i += 1);
+//   character.attack = Math.max(character.attack, character.attack * ((80 + character.health) / 100));
+//   character.defence = Math.max(character.defence, character.attack * ((80 + character.health) / 100));
+// }
+// character.level = level;
+// character.health += 80;
+// if (character.health > 100) {
+//   character.health = 100;
+// }

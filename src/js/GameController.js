@@ -149,7 +149,7 @@ export default class GameController {
           this.searchHero(this.gameState.selectPositionIndex),
           this.searchHero(index),
           index,
-        );
+        ).then(() => this.riseOftheMonsters());
       }
     }
 
@@ -399,14 +399,12 @@ export default class GameController {
     let indexComputer;
     // // we go through the player’s positions for the possibility of attack
     for (const comp of computerTeamPosition) {
-      console.log(`comp ${comp}`);
       if (positionAttack) {
         break;
       }
       this.showOpportunityAttack(comp, this.searchHero(comp).rangeAttack);
       indexComputer = this.searchHero(comp);
       for (const item of playerTeamPosition) {
-        console.log(item);
         if (this.gameState.computerPosibleAttack.includes(item)) {
           positionAttack = item;
           break;
