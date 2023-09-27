@@ -25,4 +25,14 @@ export default class Character {
     }
     // TODO: выбросите исключение, если кто-то использует "new Character()"
   }
+
+  levelUp() {
+    this.level += 1;
+    this.attack = Math.floor(Math.max(this.attack, this.attack * ((80 + this.health) / 100)));
+    this.defence = Math.floor(Math.max(this.defence, this.defence * ((80 + this.health) / 100)));
+    this.health += 80;
+    if (this.health > 100) {
+      this.health = 100;
+    }
+  }
 }

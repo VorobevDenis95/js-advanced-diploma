@@ -10,6 +10,8 @@ export default class GameState {
     this.score = 0;
     this.level = 1;
     this.countCharacters = 2;
+    this.survivors = null;
+    this.attack = false;
     this.listTeamsPlayer = [Bowman, Swordsman, Magician];
     this.listTeamsComputer = [Vampire, Undead, Daemon];
     this.teamsPositions = [];

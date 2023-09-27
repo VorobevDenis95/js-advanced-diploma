@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable max-len */
 /* eslint-disable no-continue */
 /* eslint-disable no-mixed-operators */
@@ -8,7 +9,7 @@ import PositionCharacter from './PositionedCharacter';
 import GameState from './GameState';
 import {
   generateMessage, generatePositionComputer, generatePositionPlayer,
-  generateRandomKey, generateTeam,
+  characterGenerator, generateRandomKey, generateTeam,
 } from './generators';
 import GamePlay from './GamePlay';
 import cursors from './cursors';
@@ -31,8 +32,27 @@ export default class GameController {
   }
 
   generateTeams() {
-    this.gameState.teamsPlayer = generateTeam(this.gameState.listTeamsPlayer, this.gameState.level, this.gameState.countCharacters);
+    let count;
+    if (this.gameState.survivors) {
+      count = this.gameState.countCharacters - this.gameState.survivors;
+      for (let i = 0; i < count; i += 1) {
+        this.teamsPlayer.teams.push(characterGenerator(this.gameState.listTeamsPlayer, this.gameState.level).next().value);
+      }
+    } else {
+      this.gameState.teamsPlayer = generateTeam(this.gameState.listTeamsPlayer, this.gameState.level, this.gameState.countCharacters);
+    }
     this.gameState.teamsComputer = generateTeam(this.gameState.listTeamsComputer, this.gameState.level, this.gameState.countCharacters);
+  }
+
+  levelUpGame() {
+    this.gameState.teamsPlayer.teams.map((el) => el.levelUp());
+    this.gameState.teamsComputer.teams.forEach((item) => {
+      if (item.level > 1) {
+        for (let i = 1; i < item.level; i += 1) {
+          item.levelUp();
+        }
+      }
+    });
   }
 
   generatePlayersonBoard() {
@@ -92,6 +112,7 @@ export default class GameController {
   }
 
   async attack(attacker, target, index) {
+    this.gameState.attack = true;
     const damage = Math.floor(Math.max(attacker.attack - target.defence, attacker.attack * 0.1));
     // eslint-disable-next-line no-param-reassign
     target.health -= damage;
@@ -99,6 +120,7 @@ export default class GameController {
     this.checkDeath(target, index);
     this.gamePlay.redrawPositions(this.gameState.teamsPositions);
     this.updatePositionDate();
+    this.gameState.attack = false;
   }
 
   filterTeamsPosition() {
@@ -153,7 +175,8 @@ export default class GameController {
 
     // character attack
 
-    if (this.gameState.possibleAttack.includes(index)) {
+    if (this.gameState.possibleAttack.includes(index)
+    && !this.gameState.attack) {
       if (!this.gameState.possiblePositions.includes(index)) {
         this.attack(
           this.searchHero(this.gameState.selectPositionIndex),
@@ -213,6 +236,18 @@ export default class GameController {
     }
 
     // TODO: react to mouse leave
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  levelingHero(hero, level) {
+    for (hero.level; hero.level < level; hero.level += 1) {
+      hero.attack = Math.floor(Math.max(hero.attack, hero.attack * (80 * hero.health) / 100));
+      hero.defence = Math.floor(Math.max(hero.defence, hero.defence * (80 + hero.health) / 100));
+    }
+    hero.health += 80;
+    if (hero.health > 100) {
+      hero.health = 100;
+    }
   }
 
   searchHero(index) {
@@ -426,7 +461,14 @@ export default class GameController {
       this.gameState.computerMove = false;
     }
     if (this.gameState.teamsComputer.teams.length === 0) {
+      this.gameState.survivors = this.gameState.teamsPlayer.teams.length;
+      this.gameState.teamsPositions = [];
+      this.filterTeamsPosition();
+      this.gameState.level += 1;
+      this.levelUpGame();
       this.init();
+      
+      console.log(this.gameState);
     }
   }
 }
