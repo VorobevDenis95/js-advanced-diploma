@@ -36,7 +36,7 @@ export default class GameController {
     if (this.gameState.survivors) {
       count = this.gameState.countCharacters - this.gameState.survivors;
       for (let i = 0; i < count; i += 1) {
-        this.teamsPlayer.teams.push(characterGenerator(this.gameState.listTeamsPlayer, this.gameState.level).next().value);
+        this.gameState.teamsPlayer.teams.push(characterGenerator(this.gameState.listTeamsPlayer, this.gameState.level).next().value);
       }
     } else {
       this.gameState.teamsPlayer = generateTeam(this.gameState.listTeamsPlayer, this.gameState.level, this.gameState.countCharacters);
@@ -46,13 +46,14 @@ export default class GameController {
 
   levelUpGame() {
     this.gameState.teamsPlayer.teams.map((el) => el.levelUp());
-    this.gameState.teamsComputer.teams.forEach((item) => {
-      if (item.level > 1) {
-        for (let i = 1; i < item.level; i += 1) {
-          item.levelUp();
-        }
-      }
-    });
+    this.gameState.selectPositionIndex = null;
+    // this.gameState.teamsComputer.teams.forEach((item) => {
+    //   if (item.level > 1) {
+    //     for (let i = 1; i < item.level; i += 1) {
+    //       item.levelUp();
+    //     }
+    //   }
+    // });
   }
 
   generatePlayersonBoard() {
@@ -467,7 +468,6 @@ export default class GameController {
       this.gameState.level += 1;
       this.levelUpGame();
       this.init();
-      
       console.log(this.gameState);
     }
   }

@@ -23,6 +23,12 @@ export default class Character {
     if (new.target.name === 'Character') {
       throw new Error('Нельзя создавать класс Character');
     }
+    if (level > 1) {
+      for (let i = 1; i < level; i += 1) {
+        this.levelUp();
+        this.level -= 1;
+      }
+    }
     // TODO: выбросите исключение, если кто-то использует "new Character()"
   }
 
