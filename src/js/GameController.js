@@ -107,7 +107,7 @@ export default class GameController {
   }
 
   endOfTheGame() {
-    this.cleaningBoard();
+    this.blockBoard();
   }
 
   blockBoard() {
@@ -211,6 +211,13 @@ export default class GameController {
     }
 
     // TODO: react to click
+  }
+
+  visualyMove() {
+    if (this.gameState.selectPositionIndex) {
+      this.showPossibleTransition(this.gameState.selectPositionIndex, this.searchHero(this.gameState.selectPositionIndex).range);
+      this.showOpportunityAttack(this.gameState.selectPositionIndex, this.searchHero(this.gameState.selectPositionIndex).rangeAttack);
+    }
   }
 
   onCellEnter(index) {
@@ -454,6 +461,7 @@ export default class GameController {
         this.transitionHeroPosition(this.gameState.computerPosiblePosition[keysComp], computerTeamPosition[compKey]);
         this.filterTeamsPosition();
         this.cleanCell(computerTeamPosition[compKey]);
+        this.gamePlay.setCursor(cursors.auto);
         this.gamePlay.redrawPositions(this.gameState.teamsPositions);
       });
 
@@ -480,9 +488,9 @@ export default class GameController {
         : run();
 
       this.gameState.computerMove = false;
+      this.visualyMove();
       // this.showPossibleTransition(this.searchHero(this.gameState.selectPositionIndex), this.searchHero(this.gameState.selectPositionIndex).range);
       // this.showOpportunityAttack(this.searchHero(this.gameState.selectPositionIndex), this.searchHero(this.gameState.selectPositionIndex).rangeAttack);
-      console.log(this.gameState);
     }
     if (this.gameState.teamsComputer.teams.length === 0) {
       this.gameState.survivors = this.gameState.teamsPlayer.teams.length;
