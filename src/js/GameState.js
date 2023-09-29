@@ -9,9 +9,10 @@ export default class GameState {
   constructor() {
     this.score = 0;
     this.level = 1;
-    this.countCharacters = 2;
+    this.countCharacters = this.level + 1;
     this.survivors = null;
     this.attack = false;
+    this.game = true;
     this.listTeamsPlayer = [Bowman, Swordsman, Magician];
     this.listTeamsComputer = [Vampire, Undead, Daemon];
     this.teamsPositions = [];

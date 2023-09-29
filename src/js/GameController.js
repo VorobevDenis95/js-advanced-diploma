@@ -25,6 +25,7 @@ export default class GameController {
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
+    this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
     this.gamePlay.drawUi(themes[this.gameState.level]);
     this.generateTeams();
     this.generatePlayersonBoard();
@@ -47,6 +48,9 @@ export default class GameController {
   levelUpGame() {
     this.gameState.teamsPlayer.teams.map((el) => el.levelUp());
     this.gameState.selectPositionIndex = null;
+    this.gameState.possibleAttack = [];
+    this.gameState.possiblePositions = [];
+    this.gameState.countCharacters += 1;
     // this.gameState.teamsComputer.teams.forEach((item) => {
     //   if (item.level > 1) {
     //     for (let i = 1; i < item.level; i += 1) {
@@ -95,11 +99,28 @@ export default class GameController {
       this.gamePlay.deselectCell(index);
       this.gamePlay.hideCellTooltip(index);
       this.gamePlay.setCursor(cursors.auto);
+      if (this.gameState.teamsPlayer.teams.length === 0) {
+        this.gameOver();
+        console.log(this.gameState);
+      }
     }
   }
 
   endOfTheGame() {
     this.cleaningBoard();
+  }
+
+  blockBoard() {
+    this.gameState.game = false;
+  }
+
+  gameOver() {
+    this.blockBoard();
+    this.gameState.teamsPositions = [];
+    // this.gamePlay.redrawPositions();
+    this.gameState.selectPositionIndex = null;
+    this.gameState.possibleAttack = [];
+    this.gameState.possiblePositions = [];
   }
 
   cleaningBoard() {
@@ -137,53 +158,55 @@ export default class GameController {
   }
 
   onCellClick(index) {
-    if (this.gameState.teamsPositionIndex.includes(index)
+    if (this.gameState.game) {
+      if (this.gameState.teamsPositionIndex.includes(index)
      && this.gameState.teamsPlayer.teams.includes(this.searchHero(index))) {
-      if (this.gameState.selectPositionIndex) {
-        this.gamePlay.deselectCell(this.gameState.selectPositionIndex);
+        if (this.gameState.selectPositionIndex) {
+          this.gamePlay.deselectCell(this.gameState.selectPositionIndex);
+        }
+        this.gamePlay.selectCell(index);
+        this.gameState.selectPositionIndex = index;
+        this.showPossibleTransition(index, this.searchHero(index).range);
+        this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
       }
-      this.gamePlay.selectCell(index);
-      this.gameState.selectPositionIndex = index;
-      this.showPossibleTransition(index, this.searchHero(index).range);
-      this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
-    }
 
-    if (this.gameState.teamsPositionIndex.includes(index)
+      if (this.gameState.teamsPositionIndex.includes(index)
     && !this.gameState.teamsPlayer.teams.includes(this.searchHero(index))
     && !this.gameState.selectPositionIndex) {
-      GamePlay.showError('Это не персонаж игрока!');
-    }
+        GamePlay.showError('Это не персонаж игрока!');
+      }
 
-    if (this.gameState.selectPositionIndex === index) {
-      this.gamePlay.setCursor(cursors.auto);
-    }
+      if (this.gameState.selectPositionIndex === index) {
+        this.gamePlay.setCursor(cursors.auto);
+      }
 
-    // character move
+      // character move
 
-    if (this.gameState.possiblePositions.includes(index)) {
-      this.transitionHeroPosition(index, this.gameState.selectPositionIndex);
-      this.filterTeamsPosition();
-      this.gamePlay.deselectCell(this.gameState.selectPositionIndex);
-      this.gamePlay.deselectCell(index);
-      this.gamePlay.selectCell(index);
-      this.gameState.selectPositionIndex = index;
+      if (this.gameState.possiblePositions.includes(index)) {
+        this.transitionHeroPosition(index, this.gameState.selectPositionIndex);
+        this.filterTeamsPosition();
+        this.gamePlay.deselectCell(this.gameState.selectPositionIndex);
+        this.gamePlay.deselectCell(index);
+        this.gamePlay.selectCell(index);
+        this.gameState.selectPositionIndex = index;
 
-      this.gamePlay.redrawPositions(this.gameState.teamsPositions);
-      this.riseOftheMonsters();
-      this.showPossibleTransition(index, this.searchHero(index).range);
-      this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
-    }
+        this.gamePlay.redrawPositions(this.gameState.teamsPositions);
+        this.riseOftheMonsters();
+        this.showPossibleTransition(index, this.searchHero(index).range);
+        this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
+      }
 
-    // character attack
+      // character attack
 
-    if (this.gameState.possibleAttack.includes(index)
-    && !this.gameState.attack) {
-      if (!this.gameState.possiblePositions.includes(index)) {
-        this.attack(
-          this.searchHero(this.gameState.selectPositionIndex),
-          this.searchHero(index),
-          index,
-        ).then(() => this.riseOftheMonsters());
+      if (this.gameState.possibleAttack.includes(index) && this.gameState.teamsPositionIndex.includes(index)
+      && !this.gameState.attack) {
+        if (!this.gameState.possiblePositions.includes(index)) {
+          this.attack(
+            this.searchHero(this.gameState.selectPositionIndex),
+            this.searchHero(index),
+            index,
+          ).then(() => this.riseOftheMonsters());
+        }
       }
     }
 
@@ -191,66 +214,63 @@ export default class GameController {
   }
 
   onCellEnter(index) {
-    // Chracter information on hover
-
-    if (this.gameState.teamsPositionIndex.includes(index)) {
-      this.gamePlay.showCellTooltip(generateMessage(this.searchHero(index)), index);
-      if (this.gameState.teamsPlayer.teams.includes(this.searchHero(index))) {
-        this.gamePlay.setCursor(cursors.pointer);
-      }
-      if (this.gameState.teamsComputer.teams.includes(this.searchHero(index))) {
-        if (this.gameState.possibleAttack.includes(index)) {
-          this.gamePlay.selectCell(index, 'red');
-          this.gamePlay.setCursor(cursors.crosshair);
-        } else {
-          this.gamePlay.setCursor(cursors.notallowed);
+    if (this.gameState.game) {
+      if (this.gameState.teamsPositionIndex.includes(index)) {
+        this.gamePlay.showCellTooltip(generateMessage(this.searchHero(index)), index);
+        if (this.gameState.teamsPlayer.teams.includes(this.searchHero(index))) {
+          this.gamePlay.setCursor(cursors.pointer);
+        }
+        if (this.gameState.teamsComputer.teams.includes(this.searchHero(index))) {
+          if (this.gameState.possibleAttack.includes(index)) {
+            this.gamePlay.selectCell(index, 'red');
+            this.gamePlay.setCursor(cursors.crosshair);
+          } else {
+            this.gamePlay.setCursor(cursors.notallowed);
+          }
         }
       }
-    }
 
-    // color indication of possible moves
-    if (this.gameState.possiblePositions.includes(index) && this.gameState.selectPositionIndex) {
-      this.gamePlay.setCursor(cursors.pointer);
-      this.gamePlay.selectCell(index, 'green');
-    }
-    if (this.gameState.possiblePositions.includes(index) && this.gameState.selectPositionIndex === 0) {
-      this.gamePlay.setCursor(cursors.pointer);
-      this.gamePlay.selectCell(index, 'green');
-    }
+      // color indication of possible moves
+      if (this.gameState.possiblePositions.includes(index) && this.gameState.selectPositionIndex) {
+        this.gamePlay.setCursor(cursors.pointer);
+        this.gamePlay.selectCell(index, 'green');
+      }
+      if (this.gameState.possiblePositions.includes(index) && this.gameState.selectPositionIndex === 0) {
+        this.gamePlay.setCursor(cursors.pointer);
+        this.gamePlay.selectCell(index, 'green');
+      }
 
-    if ((this.gameState.selectPositionIndex === index)) {
-      this.gamePlay.setCursor(cursors.auto);
+      if ((this.gameState.selectPositionIndex === index)) {
+        this.gamePlay.setCursor(cursors.auto);
+      }
     }
+    // Chracter information on hover
+
     // TODO: react to mouse enter
   }
 
   onCellLeave(index) {
-    if (!this.gameState.teamsPositionIndex.includes(index)) {
-      this.gamePlay.hideCellTooltip(index);
-      this.gamePlay.setCursor(cursors.auto);
-      this.gamePlay.deselectCell(index);
-    }
-
-    if (this.gameState.teamsPositionIndex.includes(index)
-    && this.gameState.teamsComputer.teams.includes(this.searchHero(index))) {
-      this.gamePlay.deselectCell(index);
-    }
-
     // TODO: react to mouse leave
+    if (this.gameState.game) {
+      if (!this.gameState.teamsPositionIndex.includes(index)) {
+        this.gamePlay.hideCellTooltip(index);
+        this.gamePlay.setCursor(cursors.auto);
+        this.gamePlay.deselectCell(index);
+      }
+
+      if (this.gameState.teamsPositionIndex.includes(index)
+      && this.gameState.teamsComputer.teams.includes(this.searchHero(index))) {
+        this.gamePlay.deselectCell(index);
+      }
+    }
+  }
+
+  onNewGameClick() {
+    this.gameState = new GameState();
+    this.init();
   }
 
   // eslint-disable-next-line class-methods-use-this
-  levelingHero(hero, level) {
-    for (hero.level; hero.level < level; hero.level += 1) {
-      hero.attack = Math.floor(Math.max(hero.attack, hero.attack * (80 * hero.health) / 100));
-      hero.defence = Math.floor(Math.max(hero.defence, hero.defence * (80 + hero.health) / 100));
-    }
-    hero.health += 80;
-    if (hero.health > 100) {
-      hero.health = 100;
-    }
-  }
-
   searchHero(index) {
     const key = this.gameState.teamsPositions.findIndex((item) => item.position === index);
     return this.gameState.teamsPositions[key].character;
@@ -460,6 +480,9 @@ export default class GameController {
         : run();
 
       this.gameState.computerMove = false;
+      // this.showPossibleTransition(this.searchHero(this.gameState.selectPositionIndex), this.searchHero(this.gameState.selectPositionIndex).range);
+      // this.showOpportunityAttack(this.searchHero(this.gameState.selectPositionIndex), this.searchHero(this.gameState.selectPositionIndex).rangeAttack);
+      console.log(this.gameState);
     }
     if (this.gameState.teamsComputer.teams.length === 0) {
       this.gameState.survivors = this.gameState.teamsPlayer.teams.length;
