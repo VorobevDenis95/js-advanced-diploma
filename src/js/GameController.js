@@ -295,22 +295,25 @@ export default class GameController {
       this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
       this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
       const load = this.stateService.load();
+      load.teamsPosition = [];
       installPrototype(load.teamsPlayer.teams);
       installPrototype(load.teamsComputer.teams);
-      load.teamsPositions.forEach((item) => {
-        Object.setPrototypeOf(item, PositionCharacter.prototype);
-        installPrototype([item.character]);
-      });
       this.gameState.from(load);
-      this.gameState.teamsPlayer = new Team(this.gameState.teamsPlayer.teams);
+      this.gameState.teamsPositions = [];
+      for (let i = 0; i < this.gameState.teamsPlayer.teams.length; i += 1) {
+        this.gameState.teamsPositions.push(new PositionCharacter(this.gameState.teamsPlayer.teams[i], this.gameState.teamsPositionIndex[i]));
+      }
+      for (let j = 0; j < this.gameState.teamsComputer.teams.length; j += 1) {
+        const k = this.gameState.teamsPlayer.teams.length;
+        const number = j + k;
+        this.gameState.teamsPositions.push(new PositionCharacter(this.gameState.teamsComputer.teams[j], this.gameState.teamsPositionIndex[number]));
+      }
       this.gamePlay.drawUi(themes[this.gameState.level]);
       this.gamePlay.redrawPositions(this.gameState.teamsPositions);
-      console.log(this.gameState);
-      console.log(this.gamePlay);
+
       if (this.gameState.selectPositionIndex) {
         this.gamePlay.selectCell(this.gameState.selectPositionIndex);
       }
-      console.log(this.gameState);
       alert('Игра загружена');
     } else {
       alert('Нет сохраненной игры');
