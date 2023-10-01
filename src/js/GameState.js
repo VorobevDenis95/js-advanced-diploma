@@ -9,6 +9,7 @@ import Team from './Team';
 export default class GameState {
   constructor() {
     this.score = 0;
+    this.record = null;
     this.level = 1;
     this.countCharacters = this.level + 1;
     this.survivors = null;
@@ -30,7 +31,7 @@ export default class GameState {
   }
 
   from(object) {
-    // не совсем понимаю как это должно работать
+    // TODO: create object
     this.score = object.score;
     this.level = object.level;
     this.countCharacters = object.countCharacters;
@@ -50,7 +51,6 @@ export default class GameState {
     this.teamsComputer = new Team(object.teamsComputer.teams);
     this.selectPositionIndex = object.selectPositionIndex;
     this.computerMove = object.computerMove;
-    // TODO: create object
     return null;
   }
 
@@ -62,5 +62,28 @@ export default class GameState {
 
   filterTeamsPosition() {
     this.teamsPositionIndex = this.teamsPositions.map((el) => el.position);
+  }
+
+  blockBoard() {
+    this.game = false;
+    this.teamsPositions = [];
+    this.clearSelectHero();
+  }
+
+  gameOver() {
+    this.blockBoard();
+    if (this.score < this.record) {
+      this.record = this.score;
+    }
+    alert('Вы проиграли');
+  }
+
+  searchHero(index) {
+    const key = this.teamsPositions.findIndex((item) => item.position === index);
+    return this.teamsPositions[key].character;
+  }
+
+  addScore() {
+    this.score += 100;
   }
 }
