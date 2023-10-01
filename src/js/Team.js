@@ -15,5 +15,9 @@ export default class Team {
   constructor(characters) {
     this.teams = [...characters];
   }
+
+  levelUpTeam() {
+    this.teams.map((el) => el.levelUp());
+  }
   // TODO: write your logic here
 }

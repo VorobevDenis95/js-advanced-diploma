@@ -53,4 +53,14 @@ export default class GameState {
     // TODO: create object
     return null;
   }
+
+  clearSelectHero() {
+    this.selectPositionIndex = null;
+    this.possibleAttack = [];
+    this.possiblePositions = [];
+  }
+
+  filterTeamsPosition() {
+    this.teamsPositionIndex = this.teamsPositions.map((el) => el.position);
+  }
 }

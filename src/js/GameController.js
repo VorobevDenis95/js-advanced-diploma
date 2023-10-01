@@ -51,7 +51,7 @@ export default class GameController {
   }
 
   levelUpGame() {
-    this.gameState.teamsPlayer.teams.map((el) => el.levelUp());
+    this.gameState.teamsPlayer.levelUpTeam();
     this.gameState.selectPositionIndex = null;
     this.gameState.possibleAttack = [];
     this.gameState.possiblePositions = [];
@@ -59,23 +59,25 @@ export default class GameController {
   }
 
   generatePlayersonBoard() {
+    const arrPlayerPosition = [];
     for (const el of this.gameState.teamsPlayer.teams) {
       let position = generatePositionPlayer(this.gamePlay.position);
-      while (position === this.gamePlay.randomPosition) {
+      while (arrPlayerPosition.includes(position)) {
         position = generatePositionPlayer(this.gamePlay.position);
       }
-      this.gamePlay.randomPosition = position;
-      this.gameState.teamsPositions.push(new PositionCharacter(el, this.gamePlay.randomPosition));
+      arrPlayerPosition.push(position);
+      this.gameState.teamsPositions.push(new PositionCharacter(el, position));
     }
+    const arrComputerPosition = [];
     for (const item of this.gameState.teamsComputer.teams) {
       let positionComp = generatePositionComputer(this.gamePlay.position);
-      while (positionComp === this.gamePlay.randomPosition) {
+      while (arrComputerPosition.includes(positionComp)) {
         positionComp = generatePositionComputer(this.gamePlay.position);
       }
-      this.gamePlay.randomPosition = positionComp;
-      this.gameState.teamsPositions.push(new PositionCharacter(item, this.gamePlay.randomPosition));
+      arrComputerPosition.push(positionComp);
+      this.gameState.teamsPositions.push(new PositionCharacter(item, positionComp));
     }
-    this.filterTeamsPosition();
+    this.gameState.filterTeamsPosition();
   }
 
   checkDeath(character, index) {
@@ -84,16 +86,14 @@ export default class GameController {
       let arr;
       if (this.gameState.teamsPlayer.teams.includes(character)) {
         arr = this.gameState.teamsPlayer.teams;
-        this.gameState.selectPositionIndex = null;
-        this.gameState.possibleAttack = [];
-        this.gameState.possiblePositions = [];
+        this.gameState.clearSelectHero();
       } else {
         arr = this.gameState.teamsComputer.teams;
       }
       const keyTeams = arr.findIndex((el) => el.health <= 0);
       this.gameState.teamsPositions.splice(key, 1);
       arr.splice(keyTeams, 1);
-      this.filterTeamsPosition();
+      this.gameState.filterTeamsPosition();
       this.gamePlay.deselectCell(index);
       this.gamePlay.hideCellTooltip(index);
       this.gamePlay.setCursor(cursors.auto);
@@ -103,26 +103,15 @@ export default class GameController {
     }
   }
 
-  endOfTheGame() {
-    this.blockBoard();
-  }
-
   blockBoard() {
-    // this.gameState.game = false;
+    this.gameState.game = false;
     this.gameState.teamsPositions = [];
-    this.gameState.selectPositionIndex = null;
-    this.gameState.possibleAttack = [];
-    this.gameState.possiblePositions = [];
+    this.gameState.clearSelectHero();
   }
 
   gameOver() {
     this.blockBoard();
     alert('Вы проиграли');
-  }
-
-  cleaningBoard() {
-    this.gameState.teamsPositions = [];
-    this.gamePlay.redrawPositions();
   }
 
   cleanCell(position) {
@@ -140,10 +129,6 @@ export default class GameController {
     this.gamePlay.redrawPositions(this.gameState.teamsPositions);
     this.updatePositionDate();
     this.gameState.attack = false;
-  }
-
-  filterTeamsPosition() {
-    this.gameState.teamsPositionIndex = this.gameState.teamsPositions.map((el) => el.position);
   }
 
   updatePositionDate() {
@@ -190,7 +175,7 @@ export default class GameController {
 
       if (this.gameState.possiblePositions.includes(index)) {
         this.transitionHeroPosition(index, this.gameState.selectPositionIndex);
-        this.filterTeamsPosition();
+        this.gameState.filterTeamsPosition();
         this.gamePlay.deselectCell(this.gameState.selectPositionIndex);
         this.gamePlay.deselectCell(index);
         this.gamePlay.selectCell(index);
@@ -280,18 +265,12 @@ export default class GameController {
 
   onNewGameClick() {
     this.gameState = new GameState();
-    this.init();
+    this.gamePlay.drawUi(themes[this.gameState.level]);
     this.start();
   }
 
   onLoadGameClick() {
     if (this.stateService.storage.length > 0) {
-      this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
-      this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
-      this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
-      this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
-      this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
-      this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
       const load = this.stateService.load();
       load.teamsPosition = [];
       installPrototype(load.teamsPlayer.teams);
@@ -430,6 +409,7 @@ export default class GameController {
     }
     position = position.filter((el) => !this.gameState.teamsPositionIndex.includes(el));
     position = position.filter((el) => el <= boardSize ** 2 - 1);
+    position = position.filter((el) => el >= 0);
 
     if (this.gameState.computerMove) {
       this.gameState.computerPosiblePosition = position;
@@ -439,7 +419,7 @@ export default class GameController {
   }
 
   showOpportunityAttack(index, rangeAttack, boardSize = 8) {
-    const positionAttack = [];
+    let positionAttack = [];
 
     let countLeft; let countTop; let countRight; let
       countBottom;
@@ -469,6 +449,8 @@ export default class GameController {
         positionAttack.push(ind);
       }
     }
+    positionAttack = positionAttack.filter((el) => el <= boardSize ** 2 - 1);
+    positionAttack = positionAttack.filter((el) => el >= 0);
     if (this.gameState.computerMove) {
       this.gameState.computerPosibleAttack = positionAttack;
     } else {
@@ -504,7 +486,7 @@ export default class GameController {
           .range);
         const keysComp = generateRandomKey(this.gameState.computerPosiblePosition);
         this.transitionHeroPosition(this.gameState.computerPosiblePosition[keysComp], computerTeamPosition[compKey]);
-        this.filterTeamsPosition();
+        this.gameState.filterTeamsPosition();
         this.cleanCell(computerTeamPosition[compKey]);
         this.gamePlay.setCursor(cursors.auto);
         this.gamePlay.redrawPositions(this.gameState.teamsPositions);
@@ -541,7 +523,7 @@ export default class GameController {
     if (this.gameState.teamsComputer.teams.length === 0) {
       this.gameState.survivors = this.gameState.teamsPlayer.teams.length;
       this.gameState.teamsPositions = [];
-      this.filterTeamsPosition();
+      this.gameState.filterTeamsPosition();
       this.gameState.level += 1;
       if (this.gameState.level > 4) {
         this.gameState.level = 4;
@@ -549,7 +531,7 @@ export default class GameController {
         alert('Поздравляем, Вы победили!');
       } else {
         this.levelUpGame();
-        this.init();
+        this.gamePlay.drawUi(themes[this.gameState.level]);
         this.start();
       }
     }
