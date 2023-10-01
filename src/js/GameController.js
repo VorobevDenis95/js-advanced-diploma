@@ -5,7 +5,7 @@
 /* eslint-disable no-unused-expressions */
 import themes from './themes';
 import PositionCharacter from './PositionedCharacter';
-
+import { installPrototype } from './utils';
 import GameState from './GameState';
 import {
   generateMessage, generatePositionComputer, generatePositionPlayer,
@@ -13,6 +13,9 @@ import {
 } from './generators';
 import GamePlay from './GamePlay';
 import cursors from './cursors';
+import Swordsman from './characters/Swordsman';
+import Magician from './characters/Magician';
+import Team from './Team';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -26,6 +29,8 @@ export default class GameController {
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
     this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
+    this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
+    this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
     this.gamePlay.drawUi(themes[this.gameState.level]);
     this.generateTeams();
     this.generatePlayersonBoard();
@@ -174,6 +179,9 @@ export default class GameController {
     && !this.gameState.teamsPlayer.teams.includes(this.searchHero(index))
     && !this.gameState.selectPositionIndex) {
         GamePlay.showError('Это не персонаж игрока!');
+        console.log(this.searchHero(index));
+        console.log(this.gameState.teamsPlayer);
+        console.log(this.gameState.teamsPlayer.teams.includes(this.searchHero(index)));
       }
 
       if (this.gameState.selectPositionIndex === index) {
@@ -275,6 +283,42 @@ export default class GameController {
   onNewGameClick() {
     this.gameState = new GameState();
     this.init();
+    console.log(this.gameState);
+  }
+
+  onLoadGameClick() {
+    if (this.stateService.storage.length > 0) {
+      this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
+      this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+      this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
+      this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
+      this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
+      this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
+      const load = this.stateService.load();
+      installPrototype(load.teamsPlayer.teams);
+      installPrototype(load.teamsComputer.teams);
+      load.teamsPositions.forEach((item) => {
+        Object.setPrototypeOf(item, PositionCharacter.prototype);
+        installPrototype([item.character]);
+      });
+      this.gameState.from(load);
+      this.gameState.teamsPlayer = new Team(this.gameState.teamsPlayer.teams);
+      this.gamePlay.drawUi(themes[this.gameState.level]);
+      this.gamePlay.redrawPositions(this.gameState.teamsPositions);
+      console.log(this.gameState);
+      console.log(this.gamePlay);
+      if (this.gameState.selectPositionIndex) {
+        this.gamePlay.selectCell(this.gameState.selectPositionIndex);
+      }
+      console.log(this.gameState);
+      alert('Игра загружена');
+    } else {
+      alert('Нет сохраненной игры');
+    }
+  }
+
+  onSaveGameClick() {
+    this.stateService.save(this.gameState);
   }
 
   // eslint-disable-next-line class-methods-use-this
