@@ -13,9 +13,6 @@ import {
 } from './generators';
 import GamePlay from './GamePlay';
 import cursors from './cursors';
-import Swordsman from './characters/Swordsman';
-import Magician from './characters/Magician';
-import Team from './Team';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -32,6 +29,9 @@ export default class GameController {
     this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
     this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
     this.gamePlay.drawUi(themes[this.gameState.level]);
+  }
+
+  start() {
     this.generateTeams();
     this.generatePlayersonBoard();
     this.gamePlay.redrawPositions(this.gameState.teamsPositions);
@@ -56,13 +56,6 @@ export default class GameController {
     this.gameState.possibleAttack = [];
     this.gameState.possiblePositions = [];
     this.gameState.countCharacters += 1;
-    // this.gameState.teamsComputer.teams.forEach((item) => {
-    //   if (item.level > 1) {
-    //     for (let i = 1; i < item.level; i += 1) {
-    //       item.levelUp();
-    //     }
-    //   }
-    // });
   }
 
   generatePlayersonBoard() {
@@ -93,7 +86,7 @@ export default class GameController {
         arr = this.gameState.teamsPlayer.teams;
         this.gameState.selectPositionIndex = null;
         this.gameState.possibleAttack = [];
-        this.gameState.computerPosiblePosition = [];
+        this.gameState.possiblePositions = [];
       } else {
         arr = this.gameState.teamsComputer.teams;
       }
@@ -106,7 +99,6 @@ export default class GameController {
       this.gamePlay.setCursor(cursors.auto);
       if (this.gameState.teamsPlayer.teams.length === 0) {
         this.gameOver();
-        console.log(this.gameState);
       }
     }
   }
@@ -116,16 +108,16 @@ export default class GameController {
   }
 
   blockBoard() {
-    this.gameState.game = false;
+    // this.gameState.game = false;
+    this.gameState.teamsPositions = [];
+    this.gameState.selectPositionIndex = null;
+    this.gameState.possibleAttack = [];
+    this.gameState.possiblePositions = [];
   }
 
   gameOver() {
     this.blockBoard();
-    this.gameState.teamsPositions = [];
-    // this.gamePlay.redrawPositions();
-    this.gameState.selectPositionIndex = null;
-    this.gameState.possibleAttack = [];
-    this.gameState.possiblePositions = [];
+    alert('Вы проиграли');
   }
 
   cleaningBoard() {
@@ -155,7 +147,7 @@ export default class GameController {
   }
 
   updatePositionDate() {
-    if (this.gameState.selectPositionIndex) {
+    if (this.gameState.selectPositionIndex || this.gameState.selectPositionIndex === 0) {
       const index = this.gameState.selectPositionIndex;
       this.showPossibleTransition(index, this.searchHero(index).range);
       this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
@@ -166,7 +158,7 @@ export default class GameController {
     if (this.gameState.game) {
       if (this.gameState.teamsPositionIndex.includes(index)
      && this.gameState.teamsPlayer.teams.includes(this.searchHero(index))) {
-        if (this.gameState.selectPositionIndex) {
+        if (this.gameState.selectPositionIndex || this.gameState.selectPositionIndex === 0) {
           this.gamePlay.deselectCell(this.gameState.selectPositionIndex);
         }
         this.gamePlay.selectCell(index);
@@ -175,13 +167,19 @@ export default class GameController {
         this.showOpportunityAttack(index, this.searchHero(index).rangeAttack);
       }
 
+      // character attack in 0 cell
       if (this.gameState.teamsPositionIndex.includes(index)
     && !this.gameState.teamsPlayer.teams.includes(this.searchHero(index))
     && !this.gameState.selectPositionIndex) {
-        GamePlay.showError('Это не персонаж игрока!');
-        console.log(this.searchHero(index));
-        console.log(this.gameState.teamsPlayer);
-        console.log(this.gameState.teamsPlayer.teams.includes(this.searchHero(index)));
+        if (this.gameState.selectPositionIndex || this.gameState.selectPositionIndex === 0) {
+          this.attack(
+            this.searchHero(this.gameState.selectPositionIndex),
+            this.searchHero(index),
+            index,
+          ).then(() => this.riseOftheMonsters());
+        } else {
+          GamePlay.showError('Это не персонаж игрока!');
+        }
       }
 
       if (this.gameState.selectPositionIndex === index) {
@@ -283,7 +281,7 @@ export default class GameController {
   onNewGameClick() {
     this.gameState = new GameState();
     this.init();
-    console.log(this.gameState);
+    this.start();
   }
 
   onLoadGameClick() {
@@ -539,14 +537,21 @@ export default class GameController {
       // this.showPossibleTransition(this.searchHero(this.gameState.selectPositionIndex), this.searchHero(this.gameState.selectPositionIndex).range);
       // this.showOpportunityAttack(this.searchHero(this.gameState.selectPositionIndex), this.searchHero(this.gameState.selectPositionIndex).rangeAttack);
     }
+    // check win level
     if (this.gameState.teamsComputer.teams.length === 0) {
       this.gameState.survivors = this.gameState.teamsPlayer.teams.length;
       this.gameState.teamsPositions = [];
       this.filterTeamsPosition();
       this.gameState.level += 1;
-      this.levelUpGame();
-      this.init();
-      console.log(this.gameState);
+      if (this.gameState.level > 4) {
+        this.gameState.level = 4;
+        this.blockBoard();
+        alert('Поздравляем, Вы победили!');
+      } else {
+        this.levelUpGame();
+        this.init();
+        this.start();
+      }
     }
   }
 }
